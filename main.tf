@@ -24,18 +24,6 @@ resource "aws_s3_bucket_website_configuration" "website" {
   }
 }
 
-resource "null_resource" "clone_git_repo" {
-  provisioner "local-exec" {
-    command = <<EOT
-      git clone https://github.com/cloudacademy/static-website-example.git website_content
-      aws s3 sync website_content s3://${aws_s3_bucket.static_bucket.id} --exclude "*.MD" --exclude ".git*" --delete 
-    EOT
-  }
-  
-  # Ensures this runs after the S3 bucket is created
-  depends_on = [aws_s3_bucket.static_bucket]
-}
-
 resource "aws_route53_record" "www" {
   zone_id = data.aws_route53_zone.sctp_zone.zone_id
   name = "${local.resource_prefix}-s3" 
