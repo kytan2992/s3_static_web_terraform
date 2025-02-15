@@ -1,6 +1,5 @@
 locals {
   resource_prefix = "ky-tf"
-  ip_range_all    = "0.0.0.0/0"
 }
 
 resource "aws_s3_bucket" "static_bucket" {
@@ -23,6 +22,18 @@ resource "aws_s3_bucket_website_configuration" "website" {
   index_document {
     suffix = "index.html"
   }
+}
+
+resource "null_resource" "clone_git_repo" {
+  provisioner "local-exec" {
+    command = <<EOT
+      git clone https://github.com/cloudacademy/static-website-example.git website_content
+      aws s3 sync website_content s3://${aws_s3_bucket.static_bucket.id} --exclude "*.MD" --exclude ".git*" --delete 
+    EOT
+  }
+  
+  # Ensures this runs after the S3 bucket is created
+  depends_on = [aws_s3_bucket.static_bucket]
 }
 
 resource "aws_route53_record" "www" {
